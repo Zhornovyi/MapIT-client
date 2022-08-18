@@ -1,1 +1,1 @@
-# EJF_Vacancies
+# Telegram Client to interact with CoursesAPI
