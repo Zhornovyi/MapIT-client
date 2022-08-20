@@ -6,7 +6,7 @@ from .utils import get_courses_api_response
 
 
 class UserSection:
-    TEXT_BUTTONS = ["Обрати курс"]
+    TEXT_BUTTONS = ["Почати тест"]
 
     def __init__(self, data: Data):
         self.data = data
@@ -25,7 +25,7 @@ class UserSection:
 
         self.bot.send_message(
             user.chat_id,
-            text="Тепер треба пройти тестування",
+            text="Супер! Попереду міні-тест з 8 простих питань, які допоможуть обрати напрям навчання",
             reply_markup=markup
         )
 

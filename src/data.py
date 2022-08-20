@@ -29,31 +29,25 @@ class Data:
         quiz = Quiz(name="RegistrationQuiz", is_required=True)
 
         q_name = Question(name="name",
-                                  message="Введіть своє імʼя:",
-                                  correct_answer_message="Приємно познайомитись 🥰",
-                                  wrong_answer_message="Введи ім’я текстом 🤡",
+                                  message="Я - бот MapIT. А тебе як звати?",
+                                  correct_answer_message="Радий познайомитись!🤝",
+                                  wrong_answer_message="Введи ім’я текстом",
         )
         q_contact = Question(name="contact",
-                             message="Обміняємося контактами?",
-                             buttons=["Тримай!"],
+                             message='Давай обміняємось контактами. Натисни кнопку "Мій номер".',
+                             buttons=["Mій номер"],
                              input_type="contact",
-                             correct_answer_message="Дякую. А я залишаю тобі контакт головного організатора: @Slavkoooo 🥰",
-                             wrong_answer_message="Надішли, будь ласка, свій контакт 🤡",
+                             correct_answer_message="Дякую! 🥰 @OfficeMapIT - люди, які знають про ІТ освіту ще більше ніж я.",
+                             wrong_answer_message="Надішли, будь ласка, свій контакт",
         )
-        q_email = Question(name="email",
-                           message="Наостанок, вкажи адресу своєї поштової скриньки.",
-                           regex="^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$",
-                           correct_answer_message="Дякую 🥰",
-                           wrong_answer_message="Введи, будь ласка, електронну адресу 🤡")
-
-        quiz.questions = [q_name, q_contact, q_email]
+        quiz.questions = [q_name, q_contact]
         quiz.save()
 
     def commit_testing_quiz(self):
         quiz = Quiz(name="TestingQuiz", is_required=False)
         q_age = Question(
             name="child_age",
-            message="Введіть вік дитини",
+            message="Оберіть вік дитини:",
             buttons=[
                 "6-8 років",
                 "9-11 років",
@@ -67,7 +61,7 @@ class Data:
 
         q_sex = Question(
             name="sex",
-            message="Введіть стать дитини?",
+            message="Оберіть стать дитини:",
             buttons=["Хлопчик", "Дівчинка"],
             correct_answer_message="Записав",
             allow_user_input=False,
@@ -76,23 +70,23 @@ class Data:
 
         q_format = Question(
             name="format",
-            message="Введіть бажаний формат проведення занять.",
+            message="Оберіть бажаний формат навчання:",
             buttons=["Online", "Offline", "Розгляну обидва варіанти"],
             correct_answer_message="Дякую 🥰",
             wrong_answer_message="Обери відповідь у меню",
             allow_user_input=False,
         )
-        # must be added only if q_format
         q_city = Question(
             name="city",
-            message="Введіть місто відвідування занять.",
+            message="Введіть місто відвідування занять:",
+            buttons=[],
             correct_answer_message="Дякую 🥰",
             max_text_size=30,
-            wrong_answer_message="Ми не можемо нічого запропонувати у даному місті, можливо хочете обрати інше?",
+            wrong_answer_message="Покощо не маю що запропонувати у цьому місті",
         )
         q_type = Question(
             name="type",
-            message="Який тип занять оберете?",
+            message="Оберіть тип занять:",
             buttons=["Групові", "Індивідуальні"],
             correct_answer_message="Записав",
             wrong_answer_message="Обери відповідь у меню",
@@ -100,13 +94,12 @@ class Data:
         )
         q_thinking = Question(
             name="thinking",
-            message="Оберіть тип мислення дитини?",
+            message="Оберіть тип мислення дитини:",
             buttons=["Творчий", "Логічний"],
             correct_answer_message="Записав",
             wrong_answer_message="Обери відповідь у меню",
             allow_user_input=False,
         )
-        # must be added only if q_thinking 
         q_exp_it = Question(
             name="experience_it",
             message="Чи має дитина досвід програмування?",
@@ -115,7 +108,6 @@ class Data:
             wrong_answer_message="Обери відповідь у меню",
             allow_user_input=False,
         )
-        # must be added only if q_format 
         q_exp_online = Question(
             name="experence_online",
             message="Чи має дитина досвід онлайн навчання?",

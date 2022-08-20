@@ -1,4 +1,5 @@
 import re
+import requests
 from time import sleep
 from typing import Iterator, Callable
 from telebot import TeleBot
@@ -11,13 +12,20 @@ from telebot.types import (
 from src.utils import reply_keyboard_columns_generator
 from src.schemas import User, Quiz, Question
 
-CANCEL_BUTTON_TEXT = "Скасувати"
+CANCEL_BUTTON_TEXT = "Скасувати тест"
 
 class InputException(Exception):
-    pass
+    answear_markup=None
+    
+    def __init__(self, *args: object) -> None:
+        self.answear_markup = args[0]
+        super().__init__()
 
 def send_welcome_message_and_start_quiz(user: User, bot, user_section ):
-    bot.send_message(user.chat_id, text="Привіт, тут ти зможеш знайти курси шоб твої нащадки стали розумнішими)")
+    bot.send_message(user.chat_id, 
+                     text="Привіт! Я - бот, що знає все про ІТ освіту дітей та підлітків в Україні. 🇺🇦 "
+                          "Розкажи мені про майбутнього айтішника, а я допоможу обрати напрям навчання, "
+                          "а потім розкажу де можна цьому навчитись (курс та школа). 💻")
     final_func = user_section.send_start_menu
     start_registration_quiz(user, bot, final_func)
 
@@ -123,11 +131,15 @@ def process_message(message: Message, **kwargs):
     try:
         if content_type == question.input_type:
             if content_type == "text":
-                valid_msg = process_text_messages( message, question, bot, user, is_required_quiz=is_required)
-                if not valid_msg:
-                    return
+                valid_msg = process_text_messages( message, question, bot, user, is_required, is_first_try)
+                if valid_msg: 
+                    if message.text == "Знайти курси онлайн":
+                        answears["format"] = "Online"
+                    else:
+                        answears[question.name] = message.text
                 else:
-                    answears[question.name] = message.text
+                    return
+                   
 
             elif content_type == "contact":
                 contact = message.contact
@@ -147,14 +159,17 @@ def process_message(message: Message, **kwargs):
         else:
             raise InputException
 
-    except InputException:
+    except InputException as e:
         is_first_try = False
-        bot.send_message(user.chat_id, text=question.wrong_answer_message)
+        bot.send_message(user.chat_id, text=question.wrong_answer_message, reply_markup=e.answear_markup)
         sleep(0.5)
 
     # do the next step
     if question:
-        # add validation of previous answears
+        # skip city input if user chose online format
+        if question.name == 'city':
+            if answears['format'] == 'Online':
+                question = next(quiz_iterator, None)
         send_question(
             user=user,
             bot=bot,
@@ -180,12 +195,13 @@ def process_text_messages(message: Message,
                           question: Question,
                           bot: TeleBot,
                           user: User,
-                          is_required_quiz: bool):
+                          is_required_quiz: bool, 
+                          is_first_try: bool):
     input_text = message.text
     if is_required_quiz is False and input_text == CANCEL_BUTTON_TEXT:
         bot.send_message(
             user.chat_id,
-            text="Форма скасована \n Тисни /start щоб продовжити",
+            text="Тестування скасоване. \nТисни /start щоб почати знову.",
             reply_markup=ReplyKeyboardRemove(),
         )
         return False
@@ -195,6 +211,24 @@ def process_text_messages(message: Message,
             pattern = re.compile(question.regex)
             if not pattern.search(input_text):
                 raise InputException
+        if question.name == "city" and input_text != "Знайти курси онлайн":
+            resp = requests.get("http://127.0.0.1:8000/get_avalible_cities/").json()
+            if input_text not in resp["cities"]:
+                if is_first_try:
+                    question.wrong_answer_message= "Не можу знайти заняття у твоєму місті. "\
+                                                   "Ось перілік доступних міст. Якщо не знайшов "\
+                                                   "свого міста продовжуй пошук курсів онлайн формату\n"
+                    for city in resp["cities"]:
+                        question.wrong_answer_message+=f"{city}\n"
+                else:
+                    question.wrong_answer_message= "Обери місто з попереднього мого повідомлення."
+                
+                answer_markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
+                change_format_btn = KeyboardButton(text="Знайти курси онлайн")
+                cancel_btn = KeyboardButton(text=CANCEL_BUTTON_TEXT)
+                answer_markup.add(change_format_btn)
+                answer_markup.add(cancel_btn)
+                raise InputException(answer_markup)
     else:
         if input_text not in question.buttons:
             raise InputException
@@ -224,7 +258,7 @@ def create_answer_markup(question: Question, is_required: bool) -> ReplyKeyboard
 
 def save_registration_answers(user: User, answears):
     answears['registered'] = True
-    for field in ["name", "phone", "email", "registered"]:
+    for field in ["name", "phone", "registered"]:
         setattr(user, field, answears[field])
     user.save()
 
