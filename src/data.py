@@ -6,6 +6,7 @@ from src.schemas import Quiz, Question
 logger = getLogger("course_bot")
 logger.setLevel(INFO)
 
+AGE_GROUPS = ["6-8 років", "9-11 років", "12-14 років", "15+ років",]
 class Data:
     def __init__(self, conn_string: str, bot: TeleBot):
         self.bot = bot
@@ -48,12 +49,7 @@ class Data:
         q_age = Question(
             name="child_age",
             message="Оберіть вік дитини:",
-            buttons=[
-                "6-8 років",
-                "9-11 років",
-                "12-14 років",
-                "15+ років",
-            ],
+            buttons= AGE_GROUPS,
             allow_user_input=False,
             correct_answer_message="Супер",
             wrong_answer_message="Обери відповідь у меню",

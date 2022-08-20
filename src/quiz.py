@@ -11,6 +11,7 @@ from telebot.types import (
 )
 from src.utils import reply_keyboard_columns_generator
 from src.schemas import User, Quiz, Question
+from src.data import AGE_GROUPS
 
 CANCEL_BUTTON_TEXT = "Скасувати тест"
 
@@ -131,7 +132,7 @@ def process_message(message: Message, **kwargs):
     try:
         if content_type == question.input_type:
             if content_type == "text":
-                valid_msg = process_text_messages( message, question, bot, user, is_required, is_first_try)
+                valid_msg = process_text_messages( message, question, bot, user, is_required, is_first_try, answears)
                 if valid_msg: 
                     if message.text == "Знайти курси онлайн":
                         answears["format"] = "Online"
@@ -196,7 +197,8 @@ def process_text_messages(message: Message,
                           bot: TeleBot,
                           user: User,
                           is_required_quiz: bool, 
-                          is_first_try: bool):
+                          is_first_try: bool,
+                          answears: dict):
     input_text = message.text
     if is_required_quiz is False and input_text == CANCEL_BUTTON_TEXT:
         bot.send_message(
@@ -212,13 +214,15 @@ def process_text_messages(message: Message,
             if not pattern.search(input_text):
                 raise InputException
         if question.name == "city" and input_text != "Знайти курси онлайн":
-            resp = requests.get("http://127.0.0.1:8000/get_avalible_cities/").json()
+            input_text = input_text.capitalize()
+            selected_age_group = AGE_GROUPS.index(answears['child_age'])+1
+            resp = requests.get("http://127.0.0.1:8000/get_avalible_cities/", params={'age_group': selected_age_group }).json()
             if input_text not in resp["cities"]:
                 if is_first_try:
                     question.wrong_answer_message= "Не можу знайти заняття у твоєму місті. "\
                                                    "Ось перілік доступних міст. Якщо не знайшов "\
                                                    "свого міста продовжуй пошук курсів онлайн формату\n"
-                    for city in resp["cities"]:
+                    for city in sorted(resp["cities"], key = str.lower):
                         question.wrong_answer_message+=f"{city}\n"
                 else:
                     question.wrong_answer_message= "Обери місто з попереднього мого повідомлення."
