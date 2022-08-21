@@ -1,28 +1,42 @@
-from telebot.types import CallbackQuery, KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
+import requests
+from json import dumps
+from telebot.types import CallbackQuery, KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton, Message
 from src.data import Data
 from src.schemas import User
-from src.quiz import start_testing_quiz
-from .utils import get_courses_api_response
+from .data import AGE_GROUPS, CLASS_FORMATS
 
 
+def get_user(message: Message) -> User:
+    user_chat_id = message.chat.id
+    user = User.objects.filter(chat_id=user_chat_id)
+    if len(user) == 0:
+        
+        username = message.chat.username if message.chat.username is not None else "No Nickname"
+        name = message.chat.first_name if message.chat.first_name is not None else "No Name"
+        surname = message.chat.last_name if message.chat.last_name is not None else "No Surname"
+        
+        user = User(
+            chat_id=user_chat_id,
+            name=name,
+            surname=surname,
+            username=username,
+            email= "No email",
+            registered = False,
+        )
+        return user
+    else:
+        return user[0]
 class UserSection:
-    TEXT_BUTTONS = ["Почати тест"]
+    START_BUTTON = "Почати тест"
 
     def __init__(self, data: Data):
         self.data = data
         self.bot = data.bot
 
-    def process_text(self, text: str, user: User):
-        if text == self.TEXT_BUTTONS[0]:
-            start_testing_quiz(user, is_random=True)
-
     def send_start_menu(self, user: User):
-
-        btn_pass_testing = KeyboardButton(text=self.TEXT_BUTTONS[0])
-
+        btn_pass_testing = KeyboardButton(text=self.START_BUTTON)
         markup = ReplyKeyboardMarkup(resize_keyboard=True)
         markup.add(btn_pass_testing)
-
         self.bot.send_message(
             user.chat_id,
             text="Супер! Попереду міні-тест з 8 простих питань, які допоможуть обрати напрям навчання",
@@ -30,14 +44,10 @@ class UserSection:
         )
 
     def send_result_menu(self, user: User, call: CallbackQuery = None):
-        text_message = get_courses_api_response(user)
-
+        text_message = get_user_topics_response(user)
         markup = self.form_result_menu_markup()
-
         if call is None:
-            self.bot.send_message(
-                chat_id=user.chat_id, text=text_message, reply_markup=markup
-            )
+            self.bot.send_message(chat_id=user.chat_id, text=text_message, reply_markup=markup)
         else:
             self.send_message(call, text=text_message, reply_markup=markup)
     
@@ -68,3 +78,36 @@ class UserSection:
 
     def form_user_callback(self, action, user_id=""):
         return f"User;{action};{user_id};"
+    
+def get_user_topics_response(user: User):
+    params = dumps(convert_request_form_into_params(user.request_form))
+    resp = requests.request(method='get', 
+                            url="http://127.0.0.1:8000/courses_topics/", 
+                            data=params)
+    if resp.status_code == 200:
+        topics = resp.json()['topics']
+        result = "За вашим запитом ми рекомендуємо вам наступні теми курсів. Щоб отримати повну підбірку оплатіть замовлення. \n"
+        if topics:
+            for topic in topics:
+                result+=f"{topic}\n"
+        else:
+            result = "Нажаль за вашим запитом не знайдено жодного курсу"
+    else:
+        result = "Можливо сталася помилка. Зверніться до адміністатора @OfficeMapIT"
+    return result
+
+def convert_request_form_into_params(form:dict) -> dict:
+    params = {
+        'age_group': AGE_GROUPS.index(form['child_age'])+1,
+        'frmt_online': True if form['format'] in [CLASS_FORMATS[0], CLASS_FORMATS[2]] else False,
+        'frmt_offline': True if form['format'] in [CLASS_FORMATS[1], CLASS_FORMATS[2]] else False,
+        'city': None,
+        'classes_type': True if form['type'] == 'Індивідуальні' else False,
+        'thinking': True if form['thinking'] == 'Логічний' else False,
+        'experience_it': True if ['experience_it'] == 'Maє' else False,
+        'experience_online': True if ['expeience_online'] == "Maє" else False,
+    }    
+    if 'city' in form:
+        params['city']= form['city'] 
+    
+    return params

@@ -7,6 +7,7 @@ logger = getLogger("course_bot")
 logger.setLevel(INFO)
 
 AGE_GROUPS = ["6-8 років", "9-11 років", "12-14 років", "15+ років",]
+CLASS_FORMATS = ["Online", "Offline", "Розгляну обидва варіанти"]
 class Data:
     def __init__(self, conn_string: str, bot: TeleBot):
         self.bot = bot
@@ -67,7 +68,7 @@ class Data:
         q_format = Question(
             name="format",
             message="Оберіть бажаний формат навчання:",
-            buttons=["Online", "Offline", "Розгляну обидва варіанти"],
+            buttons=CLASS_FORMATS,
             correct_answer_message="Дякую 🥰",
             wrong_answer_message="Обери відповідь у меню",
             allow_user_input=False,
@@ -75,7 +76,6 @@ class Data:
         q_city = Question(
             name="city",
             message="Введіть місто відвідування занять:",
-            buttons=[],
             correct_answer_message="Дякую 🥰",
             max_text_size=30,
             wrong_answer_message="Покощо не маю що запропонувати у цьому місті",
