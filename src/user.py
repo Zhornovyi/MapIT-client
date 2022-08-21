@@ -1,9 +1,10 @@
 import requests
+from os import environ
 from json import dumps
 from telebot.types import CallbackQuery, KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton, Message
 from src.data import Data
 from src.schemas import User
-from .data import AGE_GROUPS, CLASS_FORMATS
+from .data import AGE_GROUPS, CLASS_FORMATS, SERVER_LINK
 
 
 def get_user(message: Message) -> User:
@@ -82,7 +83,7 @@ class UserSection:
 def get_user_topics_response(user: User):
     params = dumps(convert_request_form_into_params(user.request_form))
     resp = requests.request(method='get', 
-                            url="http://127.0.0.1:8000/courses_topics/", 
+                            url=f"{SERVER_LINK}/courses_topics/", 
                             data=params)
     if resp.status_code == 200:
         topics = resp.json()['topics']
