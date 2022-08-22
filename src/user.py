@@ -1,10 +1,12 @@
+from email.header import Header
 import requests
 from os import environ
 from json import dumps
 from telebot.types import CallbackQuery, KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton, Message
 from src.data import Data
 from src.schemas import User
-from .data import AGE_GROUPS, CLASS_FORMATS, SERVER_LINK
+from .data import AGE_GROUPS, CLASS_FORMATS, SERVER_LINK, API_TOKEN
+
 
 
 def get_user(message: Message) -> User:
@@ -84,7 +86,8 @@ def get_user_topics_response(user: User):
     params = dumps(convert_request_form_into_params(user.request_form))
     resp = requests.request(method='get', 
                             url=f"{SERVER_LINK}/courses_topics/", 
-                            data=params)
+                            data=params,
+                            headers={'Authorization': f'Bearer {API_TOKEN}'})
     if resp.status_code == 200:
         topics = resp.json()['topics']
         result = "За вашим запитом ми рекомендуємо вам наступні теми курсів. Щоб отримати повну підбірку оплатіть замовлення. \n"

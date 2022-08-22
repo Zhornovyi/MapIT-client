@@ -11,7 +11,7 @@ from telebot.types import (
 )
 from src.utils import reply_keyboard_columns_generator
 from src.schemas import User, Quiz, Question
-from src.data import AGE_GROUPS, SERVER_LINK
+from src.data import AGE_GROUPS, SERVER_LINK, API_TOKEN
 
 CANCEL_BUTTON_TEXT = "Скасувати тест"
 
@@ -216,7 +216,9 @@ def process_text_messages(message: Message,
         if question.name == "city" and input_text != "Знайти курси онлайн":
             input_text = input_text.capitalize()
             selected_age_group = AGE_GROUPS.index(answears['child_age'])+1
-            resp = requests.get(f"{SERVER_LINK}/get_avalible_cities/", params={'age_group': selected_age_group }).json()
+            resp = requests.get(f"{SERVER_LINK}/get_avalible_cities/", 
+                                params={'age_group': selected_age_group },
+                                headers={'Authorization': f'Bearer {API_TOKEN}'}).json()
             if input_text not in resp["cities"]:
                 if is_first_try:
                     question.wrong_answer_message= "Не можу знайти заняття у твоєму місті. "\
