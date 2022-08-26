@@ -1,12 +1,9 @@
-from email.header import Header
 import requests
-from os import environ
 from json import dumps
 from telebot.types import CallbackQuery, KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton, Message
 from src.data import Data
-from src.schemas import User
+from src.schemas import User, InterfaceMessages
 from .data import AGE_GROUPS, CLASS_FORMATS, SERVER_LINK, API_TOKEN
-
 
 
 def get_user(message: Message) -> User:
@@ -42,7 +39,7 @@ class UserSection:
         markup.add(btn_pass_testing)
         self.bot.send_message(
             user.chat_id,
-            text="Супер! Попереду міні-тест з 8 простих питань, які допоможуть обрати напрям навчання",
+            text=InterfaceMessages.objects.filter(name="InterfaceMessages").first().start_menu_text,
             reply_markup=markup
         )
 
@@ -50,7 +47,7 @@ class UserSection:
         text_message = get_user_topics_response(user)
         markup = self.form_result_menu_markup()
         if call is None:
-            self.bot.send_message(chat_id=user.chat_id, text=text_message, reply_markup=markup)
+            self.bot.send_message(chat_id=user.chat_id, text=text_message, reply_markup=markup, parse_mode="markdown")
         else:
             self.send_message(call, text=text_message, reply_markup=markup)
     
@@ -90,10 +87,12 @@ def get_user_topics_response(user: User):
                             headers={'Authorization': f'Bearer {API_TOKEN}'})
     if resp.status_code == 200:
         topics = resp.json()['topics']
-        result = "За вашим запитом ми рекомендуємо вам наступні теми курсів. Щоб отримати повну підбірку оплатіть замовлення. \n"
+        free_answears = InterfaceMessages.objects.filter(name="InterfaceMessages").first().free_answear_text
+        result = free_answears[0]
         if topics:
             for topic in topics:
-                result+=f"{topic}\n"
+                result+=f"\xF0\x9F\x93\x8C{topic}\n"
+            result+=free_answears[1]
         else:
             result = "Нажаль за вашим запитом не знайдено жодного курсу"
     else:
@@ -103,6 +102,7 @@ def get_user_topics_response(user: User):
 def convert_request_form_into_params(form:dict) -> dict:
     params = {
         'age_group': AGE_GROUPS.index(form['child_age'])+1,
+        # TODO: shouldn't get anything if both selected
         'frmt_online': True if form['format'] in [CLASS_FORMATS[0], CLASS_FORMATS[2]] else False,
         'frmt_offline': True if form['format'] in [CLASS_FORMATS[1], CLASS_FORMATS[2]] else False,
         'city': None,

@@ -1,3 +1,4 @@
+from email.policy import default
 from urllib import request
 import mongoengine as me
 
@@ -22,7 +23,6 @@ class User(me.Document):
 class Question(me.EmbeddedDocument):
     name = me.StringField(required=True)
     message = me.StringField(required=True)
-    # photo = me.StringField(default=None)
     buttons = me.ListField(default=list())
     input_type = me.StringField(choices=["text", "contact"], default="text")
     max_text_size = me.IntField(max_value=4000)
@@ -35,3 +35,11 @@ class Quiz(me.Document):
     name = me.StringField(required=True)
     questions = me.ListField(me.EmbeddedDocumentField(Question), default=list())
     is_required = me.BooleanField(default=False)
+
+class InterfaceMessages(me.Document):
+    name = me.StringField(required=True)
+    welcome_text = me.StringField(required=True)
+    city_wrong_input_answear = me.StringField(required=True)
+    start_menu_text = me.StringField(required=True)
+    free_answear_text = me.ListField(default=list())
+    paid_answear_text = me.StringField(reqired=True)

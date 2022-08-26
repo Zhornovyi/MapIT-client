@@ -2,7 +2,7 @@ import mongoengine as me
 from os import environ
 from logging import getLogger, INFO
 from telebot import TeleBot
-from src.schemas import Quiz, Question
+from src.schemas import Quiz, Question, InterfaceMessages
 
 logger = getLogger("course_bot")
 logger.setLevel(INFO)
@@ -30,6 +30,10 @@ class Data:
         if Quiz.objects.filter(name="TestingQuiz").count() == 0:
             self.commit_testing_quiz()
             logger.info("Testing quiz has been added")
+        
+        if InterfaceMessages.objects.filter(name="InterfaceMessages").count() == 0:
+            self.commit_interface_massages()
+            logger.info("Interface masseges has been added.")
 
     def commit_registration_quiz(self):
 
@@ -140,5 +144,23 @@ class Data:
 
             quiz.save()
 
+    def commit_interface_massages(self):
+        table = InterfaceMessages(name="InterfaceMessages")
+        table.welcome_text = "Привіт! Я - бот, що знає все про ІТ освіту дітей та підлітків в Україні. 🇺🇦 " \
+                             "Розкажи мені про майбутнього айтішника, а я допоможу обрати напрям навчання, " \
+                             "а потім розкажу де можна цьому навчитись (курс та школа). 💻"
+        table.city_wrong_input_answear = "Не можу знайти заняття у твоєму місті. "\
+                                         "Ось перілік доступних міст. Якщо не знайшов "\
+                                         "свого міста продовжуй пошук курсів онлайн формату\n"
+        table.start_menu_text = "Супер! Попереду міні-тест з 8 простих питань, які допоможуть обрати напрям навчання"
+        table.free_answear_text = ["Дякуємо за вашу довіру! Ми проаналізували відповіді та рекомендуємо такі напрямки навчання \xF0\x9F\x91\x87\n", 
+                                   "\nВ країні багато навчальних закладів, де навчають юних айтішників, і ми обрали найкращі саме для вашої дитини.\n\n"
+                                   "Щоб отримати список шкіл за вашими напрямками натисніть на кнопку 'Отримати'\n\n"
+                                   "`[Договір публічної оферти] (https://drive.google.com/file/d/14c0K6gxz0CEGA-WFkwelc62Ct_bwNpY9/view?usp=sharing)`\n"
+                                   "`[Політика конфіденційності] (https://drive.google.com/file/d/1UaYczwfsdliKAbxrwFHBIePdNaBAQNOd/view?usp=sharing`)`"]
+        table.paid_answear_text =  ""
+        
+        table.save()
+        
 
 

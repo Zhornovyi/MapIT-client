@@ -10,7 +10,7 @@ from telebot.types import (
     ReplyKeyboardRemove,
 )
 from src.utils import reply_keyboard_columns_generator
-from src.schemas import User, Quiz, Question
+from src.schemas import User, Quiz, Question, InterfaceMessages
 from src.data import AGE_GROUPS, SERVER_LINK, API_TOKEN
 
 CANCEL_BUTTON_TEXT = "Скасувати тест"
@@ -24,9 +24,7 @@ class InputException(Exception):
 
 def send_welcome_message_and_start_quiz(user: User, bot, user_section ):
     bot.send_message(user.chat_id,
-                     text="Привіт! Я - бот, що знає все про ІТ освіту дітей та підлітків в Україні. 🇺🇦 "
-                          "Розкажи мені про майбутнього айтішника, а я допоможу обрати напрям навчання, "
-                          "а потім розкажу де можна цьому навчитись (курс та школа). 💻")
+                     text=InterfaceMessages.objects.filter(name="InterfaceMessages").first().welcome_text)
     final_func = user_section.send_start_menu
     start_registration_quiz(user, bot, final_func)
 
@@ -222,9 +220,7 @@ def process_text_messages(message: Message,
 
             if input_text not in resp["cities"]:
                 if is_first_try:
-                    question.wrong_answer_message= "Не можу знайти заняття у твоєму місті. "\
-                                                   "Ось перілік доступних міст. Якщо не знайшов "\
-                                                   "свого міста продовжуй пошук курсів онлайн формату\n"
+                    question.wrong_answer_message = InterfaceMessages.objects.filter(name="InterfaceMessages").first().city_wrong_answear
                     for city in sorted(resp["cities"], key = str.lower):
                         question.wrong_answer_message+=f"{city}\n"
                 else:
