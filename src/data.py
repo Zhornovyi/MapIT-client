@@ -9,8 +9,10 @@ logger.setLevel(INFO)
 
 AGE_GROUPS = ["6-8 років", "9-11 років", "12-14 років", "15+ років",]
 CLASS_FORMATS = ["Online", "Offline", "Розгляну обидва варіанти"]
-SERVER_LINK = environ.get("API_LINK", "127.0.0.1:8000")
+SERVER_LINK = environ.get("API_LINK", "http://127.0.0.1:8000")
 API_TOKEN = environ.get("API_TOKEN", None)
+
+
 class Data:
     def __init__(self, conn_string: str, bot: TeleBot):
         self.bot = bot
@@ -28,7 +30,7 @@ class Data:
         if Quiz.objects.filter(name="TestingQuiz").count() == 0:
             self.commit_testing_quiz()
             logger.info("Testing quiz has been added")
-        
+
     def commit_registration_quiz(self):
 
         quiz = Quiz(name="RegistrationQuiz", is_required=True)

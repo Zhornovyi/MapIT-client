@@ -17,13 +17,13 @@ CANCEL_BUTTON_TEXT = "Скасувати тест"
 
 class InputException(Exception):
     answear_markup=None
-    
+
     def __init__(self, *args: object) -> None:
         self.answear_markup = args[0]
         super().__init__()
 
 def send_welcome_message_and_start_quiz(user: User, bot, user_section ):
-    bot.send_message(user.chat_id, 
+    bot.send_message(user.chat_id,
                      text="Привіт! Я - бот, що знає все про ІТ освіту дітей та підлітків в Україні. 🇺🇦 "
                           "Розкажи мені про майбутнього айтішника, а я допоможу обрати напрям навчання, "
                           "а потім розкажу де можна цьому навчитись (курс та школа). 💻")
@@ -219,6 +219,7 @@ def process_text_messages(message: Message,
             resp = requests.get(f"{SERVER_LINK}/get_avalible_cities/", 
                                 params={'age_group': selected_age_group },
                                 headers={'Authorization': f'Bearer {API_TOKEN}'}).json()
+
             if input_text not in resp["cities"]:
                 if is_first_try:
                     question.wrong_answer_message= "Не можу знайти заняття у твоєму місті. "\
