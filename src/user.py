@@ -47,7 +47,7 @@ class UserSection:
         text_message = get_user_topics_response(user)
         markup = self.form_result_menu_markup()
         if call is None:
-            self.bot.send_message(chat_id=user.chat_id, text=text_message, reply_markup=markup, parse_mode="markdown")
+            self.bot.send_message(chat_id=user.chat_id, text=text_message, reply_markup=markup)
         else:
             self.send_message(call, text=text_message, reply_markup=markup)
     
@@ -91,7 +91,7 @@ def get_user_topics_response(user: User):
         result = free_answears[0]
         if topics:
             for topic in topics:
-                result+=f"\xF0\x9F\x93\x8C{topic}\n"
+                result+=f"📌 {topic}\n"
             result+=free_answears[1]
         else:
             result = "Нажаль за вашим запитом не знайдено жодного курсу"

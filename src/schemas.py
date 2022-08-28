@@ -43,3 +43,4 @@ class InterfaceMessages(me.Document):
     start_menu_text = me.StringField(required=True)
     free_answear_text = me.ListField(default=list())
     paid_answear_text = me.StringField(reqired=True)
+    info_text = me.StringField(required=True)

@@ -220,7 +220,7 @@ def process_text_messages(message: Message,
 
             if input_text not in resp["cities"]:
                 if is_first_try:
-                    question.wrong_answer_message = InterfaceMessages.objects.filter(name="InterfaceMessages").first().city_wrong_answear
+                    question.wrong_answer_message = InterfaceMessages.objects.filter(name="InterfaceMessages").first().city_wrong_input_answear
                     for city in sorted(resp["cities"], key = str.lower):
                         question.wrong_answer_message+=f"{city}\n"
                 else:
