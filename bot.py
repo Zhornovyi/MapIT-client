@@ -69,4 +69,4 @@ def handle_text_buttons(message):
 
 
 if __name__ == "__main__":
-    bot.polling(True)
+    bot.infinity_polling()
