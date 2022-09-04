@@ -1,10 +1,11 @@
 import requests
 from json import dumps
-from telebot.types import CallbackQuery, KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton, Message
+from telebot.types import CallbackQuery, KeyboardButton, ReplyKeyboardMarkup, Message, LabeledPrice
 from src.data import Data
 from src.schemas import User, InterfaceMessages
-from .data import AGE_GROUPS, CLASS_FORMATS, SERVER_LINK, API_TOKEN
+from .data import AGE_GROUPS, CLASS_FORMATS, SERVER_LINK, API_TOKEN, PAY_TOKEN
 
+prices = [LabeledPrice(label='Отримати курси', amount=120_00)]
 
 def get_user(message: Message) -> User:
     user_chat_id = message.chat.id
@@ -43,42 +44,58 @@ class UserSection:
             reply_markup=markup
         )
 
-    def send_result_menu(self, user: User, call: CallbackQuery = None):
-        text_message = get_user_topics_response(user)
-        markup = self.form_result_menu_markup()
-        if call is None:
-            self.bot.send_message(chat_id=user.chat_id, text=text_message, reply_markup=markup)
-        else:
-            self.send_message(call, text=text_message, reply_markup=markup)
+    def send_free_result_answear(self, user: User, call: CallbackQuery = None):
+        text_message, succeed = get_user_topics_response(user)
+        self.bot.send_message(user.chat_id, text_message)
+        if succeed:
+            self.bot.send_invoice(
+                        user.chat_id,
+                        'Отримати список шкіл з контактами',
+                        "Щоб отримати список шкіл за вашими напрямками натисніть на кнопку 'Оплатити'",
+                        'Оплачена відповідь',
+                        PAY_TOKEN,
+                        'UAH',
+                        prices,
+                        is_flexible=False,
+                        start_parameter='',
+                        )
     
-    def form_result_menu_markup(self) -> InlineKeyboardMarkup:
-        criteria_markup = InlineKeyboardMarkup()
-        callback_data = self.form_user_callback(action="Pay")
-        pay_but = InlineKeyboardButton(text="Pay", callback_data=callback_data)
-        criteria_markup.add(pay_but)
-        return criteria_markup
     
-    def process_callback(self, call: CallbackQuery, user: User):
-        action = call.data.split(";")[1]
-
-        if action == "Pay":
-            self.get_payment_menu(user, call=call)
-        else:
-            self.answer_wrong_action(call)
-
-        self.bot.answer_callback_query(call.id)
-    
-    def answer_wrong_action(self, call: CallbackQuery):
-        wrong_action_text = "Неправильний action в callback.data"
-        self.bot.answer_callback_query(call.id, text=wrong_action_text)
-    
-    def get_payment_menu(self, user, call=None):
-        self.bot.send_message(chat_id=user.chat_id, text="Меседж про спосіб оплати")
-        self.bot.send_message(chat_id=user.chat_id, text="Розширена відповідь")
-
     def form_user_callback(self, action, user_id=""):
         return f"User;{action};{user_id};"
     
+    def send_full_results_answear(self, user: User):
+        err = False
+        params = dumps(convert_request_form_into_params(user.request_form))
+        resp = requests.request(method='get', 
+                                url=f"{SERVER_LINK}/get_full_info/", 
+                                data=params,
+                                headers={'Authorization': f'Bearer {API_TOKEN}'})
+        if resp.status_code == 200:
+            courses = resp.json()['courses']        
+            if courses:
+                paid_text = InterfaceMessages.objects.filter(name="InterfaceMessages").first().paid_answear_text
+                self.bot.send_message(user.chat_id, text=paid_text)
+                for course in courses:
+                   self.bot.send_message(chat_id=user.chat_id, text=convert_course_into_msg(course), parse_mode="HTML", disable_web_page_preview=True)
+            else:
+                err = True
+        else:
+            err = True
+        if err:
+            self.bot.send_message(chat_id=user.chat_id, text="Від час виконання Вашого запиту сталася помилка. Зверніться до адміністатора @OfficeMapIT")
+
+def convert_course_into_msg(course):
+    res = f"<b>Школа:</b> <u>{course[0]}</u>\n"\
+            f"<b>Курс</b>: <u>{course[1]}</u>\n"\
+            f"<b>Телефон:</b> {'+'+str(int(course[2]))} {',  +'+str(int(course[3])) if course[3] else ''}\n"\
+            f'<a href="{course[4]}">Веб-стокінка школи</a>\n'
+    if course[5]:
+        res += f'<a href="{course[5]}">Facebook</a>\n'
+    if course[6]:
+        res += f'<a href="{course[6]}">Instagram</a>\n'
+    return res
+ 
 def get_user_topics_response(user: User):
     params = dumps(convert_request_form_into_params(user.request_form))
     resp = requests.request(method='get', 
@@ -97,7 +114,7 @@ def get_user_topics_response(user: User):
             result = "Нажаль за вашим запитом не знайдено жодного курсу"
     else:
         result = "Можливо сталася помилка. Зверніться до адміністатора @OfficeMapIT"
-    return result
+    return result, bool(topics)
 
 def convert_request_form_into_params(form:dict) -> dict:
     params = {

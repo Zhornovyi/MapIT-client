@@ -34,25 +34,11 @@ def start_bot(message):
        logger.error(f"Exception during start - {e}")
 
 @bot.message_handler(commands=["info"])
-def get_contacts(message):
+def send_info(message):
     user = get_user(message)
     msg  = InterfaceMessages.objects.filter(name="InterfaceMessages").first().info_text
     bot.send_message(chat_id = user.chat_id, 
                      text=msg)
-
-@bot.callback_query_handler(func=lambda call: True)
-def handle_callback_query(call):
-    user = get_user(call.message)
-    bot.clear_step_handler_by_chat_id(user.chat_id)
-    section = call.data.split(";")[0]
-
-    try:
-        if section == "User":
-            user_section.process_callback(call=call, user=user)
-
-    except Exception as e:
-        logger.error(f"Exception during {section}.{call.data.split(';')[1]} btn tap - {e}")
-
 
 @bot.message_handler(content_types=["text"])
 def handle_text_buttons(message):
@@ -60,13 +46,24 @@ def handle_text_buttons(message):
     message_text = message.text
     try:
         if message_text == user_section.START_BUTTON:
-            start_testing_quiz(user=user, bot=bot, final_func=user_section.send_result_menu)
+            start_testing_quiz(user=user, bot=bot, final_func=user_section.send_free_result_answear)
         else:
-            pass  # answer user that it was invalid input (in utils.py maybe)
+            bot.send_message(chat_id = user.chat_id, text="Навіть не знаю що відповісти)")
 
     except Exception as e:
         logger.error(e)
 
+
+@bot.pre_checkout_query_handler(func=lambda query: True)
+def checkout(pre_checkout_query):
+    bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True,
+                                  error_message="Оплата не пройшла, перевірте дані оплати та спробуйте ще раз")
+
+
+@bot.message_handler(content_types=['successful_payment'])
+def got_payment(message):
+    user = get_user(message)
+    user_section.send_full_results_answear(user)
 
 if __name__ == "__main__":
     bot.infinity_polling()
