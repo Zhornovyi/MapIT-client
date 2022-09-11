@@ -35,10 +35,9 @@ def start_bot(message):
 
 @bot.message_handler(commands=["info"])
 def send_info(message):
-    user = get_user(message)
-    msg  = InterfaceMessages.objects.filter(name="InterfaceMessages").first().info_text
-    bot.send_message(chat_id = user.chat_id, 
-                     text=msg)
+    msg: str  = InterfaceMessages.objects.filter(name="InterfaceMessages").first().info_text
+    msg = msg.replace("<br>", "\n")
+    bot.send_message(chat_id = message.chat.id, text=msg, parse_mode="HTML", disable_web_page_preview=True)
 
 @bot.message_handler(content_types=["text"])
 def handle_text_buttons(message):
