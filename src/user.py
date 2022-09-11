@@ -58,7 +58,10 @@ class UserSection:
                         prices,
                         is_flexible=False,
                         start_parameter='',
-                        )
+                        photo_url="https://www.freepnglogos.com/uploads/visa-and-mastercard-logo-26.png",
+                        photo_height=100,
+                        photo_width=400,
+			photo_size=400)
     
     
     def form_user_callback(self, action, user_id=""):
