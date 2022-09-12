@@ -35,8 +35,6 @@ def start_registration_quiz(user: User, bot: TeleBot, final_func: Callable):
     quiz_iterator = iter(reg_quiz_questions)
     question = next(quiz_iterator)
 
-    sleep(1)
-
     send_question(
         user,
         bot,
@@ -54,8 +52,6 @@ def start_testing_quiz(user: User, bot: TeleBot, final_func: Callable):
 
     quiz_iterator = iter(questions)
     question = next(quiz_iterator)
-
-    sleep(1)
 
     send_question(
         user,
@@ -128,7 +124,12 @@ def process_message(message: Message, **kwargs):
     content_type = message.content_type
 
     try:
-        if content_type == question.input_type:
+        if message.text == "/info":
+            msg: str  = InterfaceMessages.objects.filter(name="InterfaceMessages").first().info_text
+            msg = msg.replace("<br>", "\n")
+            bot.send_message(chat_id = message.chat.id, text=msg, parse_mode="HTML", disable_web_page_preview=True)
+        
+        elif content_type == question.input_type:
             if content_type == "text":
                 valid_msg = process_text_messages( message, question, bot, user, is_required, is_first_try, answears)
                 if valid_msg: 
@@ -151,7 +152,6 @@ def process_message(message: Message, **kwargs):
 
             if question.correct_answer_message:
                 bot.send_message(user.chat_id,text=question.correct_answer_message,reply_markup=ReplyKeyboardRemove())
-                sleep(0.5)
                 
             question = next(quiz_iterator, None)
             is_first_try = True
@@ -161,7 +161,6 @@ def process_message(message: Message, **kwargs):
     except InputException as e:
         is_first_try = False
         bot.send_message(user.chat_id, text=question.wrong_answer_message, reply_markup=e.answear_markup)
-        sleep(0.5)
 
     # do the next step
     if question:
