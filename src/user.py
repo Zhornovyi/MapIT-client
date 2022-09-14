@@ -92,7 +92,7 @@ def convert_course_into_msg(course):
     res = f"<b>Школа:</b> <u>{course[0]}</u>\n"\
             f"<b>Курс</b>: <u>{course[1]}</u>\n"\
             f"<b>Телефон:</b> {'+'+str(int(course[2]))} {',  +'+str(int(course[3])) if course[3] else ''}\n"\
-            f'<a href="{course[4]}">Веб-стокінка школи</a>\n'
+            f'<a href="{course[4]}">Веб-сторінка школи</a>\n'
     if course[5]:
         res += f'<a href="{course[5]}">Facebook</a>\n'
     if course[6]:
